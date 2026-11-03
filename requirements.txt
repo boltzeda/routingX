@@ -1,0 +1,8 @@
+# Python packages used by the LineExplore router.
+# Python runtime: Python 3.12, matching KiCad 10's pcbnew binding in this project.
+numpy==2.4.3
+shapely==2.1.2
+
+# System dependencies (not installable with pip):
+# - KiCad 10, providing the pcbnew Python binding
+# - kicad-cli, used by the router's native board DRC checks
