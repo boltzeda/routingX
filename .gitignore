@@ -1,0 +1,10 @@
+# Python bytecode and local environments
+__pycache__/
+*.py[cod]
+.venv*/
+
+# Router-generated files
+*.routes.json
+*_routing_result.json
+*_routed.kicad_pcb
+*.geo
