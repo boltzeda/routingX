@@ -1,4 +1,4 @@
-"""Run the standalone router with ``python -m router_tool``."""
+"""Run the router with ``python -m Boltzpcb_router``."""
 
 from .cli import main
 
