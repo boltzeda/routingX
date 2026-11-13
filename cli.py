@@ -13,15 +13,15 @@ from typing import Any
 
 
 ENGINE_DIR = Path(__file__).resolve().parent / "engine"
-LINEEXPLORE_SOURCE = ENGINE_DIR / "lineexplore.py"
+WORKER_SOURCE = ENGINE_DIR / "worker.py"
 PCBNEW_DIST_PACKAGES = Path("/usr/lib/python3/dist-packages")
 
 
 def _load_lineexplore():
     """Load this directory's router implementation without the layout plugin."""
-    if not LINEEXPLORE_SOURCE.is_file():
+    if not WORKER_SOURCE.is_file():
         raise FileNotFoundError(
-            f"LineExplore implementation not found: {LINEEXPLORE_SOURCE}"
+            f"Router worker implementation not found: {WORKER_SOURCE}"
         )
     # The implementation imports its routing-rule module by its local name.
     source_dir = str(ENGINE_DIR)
@@ -31,10 +31,10 @@ def _load_lineexplore():
         sys.path.append(str(PCBNEW_DIST_PACKAGES))
 
     spec = importlib.util.spec_from_file_location(
-        "router_tool_lineexplore_implementation", LINEEXPLORE_SOURCE
+        "router_tool_worker_implementation", WORKER_SOURCE
     )
     if spec is None or spec.loader is None:
-        raise ImportError(f"could not load LineExplore from {LINEEXPLORE_SOURCE}")
+        raise ImportError(f"could not load router worker from {WORKER_SOURCE}")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
