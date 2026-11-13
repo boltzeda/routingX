@@ -10,7 +10,7 @@ import tempfile
 
 from board_apply import _strip_tracks_text
 
-WORKER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lineexplore.py")
+WORKER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker.py")
 
 
 def _audit_zone_pads_on(board, geo):

@@ -21,7 +21,7 @@ from board_audit import (
     _new_drc_findings, _audit_final_connectivity,
 )
 
-WORKER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lineexplore.py")
+WORKER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker.py")
 
 
 def _geometry_stage(geo_json, routes_json, via_cost, deadline):
