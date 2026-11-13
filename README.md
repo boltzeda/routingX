@@ -6,23 +6,45 @@ input board is preserved.
 
 ## Requirements
 
-- Python 3.12
-- KiCad 10, including the `pcbnew` Python binding and `kicad-cli`
+- A Python interpreter compatible with the installed KiCad `pcbnew` binding
+- A KiCad installation with the `pcbnew` Python binding and `kicad-cli`
 - Python packages listed in `requirements.txt`
 
-The documented target is Python 3.12 with KiCad 10 on Ubuntu 24.04. Other
-Python and KiCad combinations have not been established. The `pcbnew` binding
-and `kicad-cli` come from the system KiCad installation and are not installed
-by pip.
+The router searches common KiCad installation locations on Windows, macOS,
+and Linux. The `pcbnew` binding and `kicad-cli` come from KiCad and are not
+installed by pip. The Python interpreter must be compatible with the installed
+KiCad binding.
 
 ## Setup
 
 From the directory containing the `Boltzpcb_router/` folder:
 
 ```bash
-python3.12 -m venv --system-site-packages Boltzpcb_router/.venv-router
-Boltzpcb_router/.venv-router/bin/python -m pip install -r Boltzpcb_router/requirements.txt
+python -m venv --system-site-packages Boltzpcb_router/.venv-router
 ```
+
+Activate the environment with PowerShell on Windows:
+
+```powershell
+.\Boltzpcb_router\.venv-router\Scripts\Activate.ps1
+```
+
+On macOS or Linux:
+
+```bash
+source Boltzpcb_router/.venv-router/bin/activate
+```
+
+Then install the dependencies:
+
+```bash
+python -m pip install -r Boltzpcb_router/requirements.txt
+```
+
+If automatic discovery does not find KiCad, set `KICAD_ROOT` to its install
+root. You can set `KICAD_PYTHON_PATH` to the directory containing `pcbnew.py`
+or `_pcbnew`, `KICAD_BIN` to the directory containing KiCad's native
+libraries, or `KICAD_CLI` to the `kicad-cli` executable or its directory.
 
 This project currently runs from a source checkout; it is not published as an
 installable Python package.
@@ -30,7 +52,7 @@ installable Python package.
 ## Usage
 
 ```bash
-Boltzpcb_router/.venv-router/bin/python -m Boltzpcb_router path/to/placed_board.kicad_pcb
+python -m Boltzpcb_router path/to/placed_board.kicad_pcb
 ```
 
 By default, a complete route is written as `<board>_routed.kicad_pcb` beside
@@ -39,8 +61,8 @@ the input. A partial route is written as `<board>_partial.kicad_pcb`. With
 `_partial` before the file extension:
 
 ```bash
-Boltzpcb_router/.venv-router/bin/python -m Boltzpcb_router \
-  path/to/placed_board.kicad_pcb --out path/to/routed_board.kicad_pcb
+python -m Boltzpcb_router path/to/placed_board.kicad_pcb \
+  --out path/to/routed_board.kicad_pcb
 ```
 
 Options:
