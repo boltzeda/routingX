@@ -1,7 +1,6 @@
 """Apply LineExplore tracks and vias to an existing KiCad board."""
 
-import sys
-
+from kicad_host import import_pcbnew
 from router_constants import NM
 from routing_rules import rule_for_net
 
@@ -38,8 +37,7 @@ def _strip_tracks_text(board_file):
 
 
 def apply_routes(board_file, out_file, routes, drc):
-    sys.path.insert(0, '/usr/lib/python3/dist-packages')
-    import pcbnew
+    pcbnew = import_pcbnew()
 
     board = pcbnew.LoadBoard(_strip_tracks_text(board_file))
     if board is None:

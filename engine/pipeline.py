@@ -12,6 +12,7 @@ import traceback
 
 from routing_rules import normalize_routing_rules
 from router_constants import *  # noqa: F403
+from kicad_host import subprocess_environment
 from board_geometry import _clamp_routing_rules_for_board, extract_geometry
 from route_planner import route_geometry
 from route_refinement import postprocess_135_routes
@@ -72,13 +73,11 @@ def _run_geometry_subprocess(geo, routes_json, via_cost, deadline=None):
         os.remove(routes_json)      # stale checkpoint from an earlier run
     except OSError:
         pass
-    env = {k: v for k, v in os.environ.items()
-           if k in ("PATH", "HOME", "LD_LIBRARY_PATH", "LANG")}
     proc = subprocess.run(
         [sys.executable, "-u", WORKER_SCRIPT,
          "--geometry-stage", geo_json, routes_json, str(via_cost),
          str(deadline)],
-        env=env, cwd=here)   # inherit stdio: [LE] progress streams live
+        env=subprocess_environment(), cwd=here)   # inherit stdio: [LE] progress streams live
     if proc.returncode not in (0, 2):
         # crash mid-retry: the per-attempt checkpoint is still a usable board
         if os.path.exists(routes_json):
@@ -128,13 +127,11 @@ def _run_postprocess_subprocess(geo, routes_json, via_cost):
     geo_json = routes_json + ".post.geo"
     with open(geo_json, "w") as f:
         json.dump(geo, f)
-    env = {k: v for k, v in os.environ.items()
-           if k in ("PATH", "HOME", "LD_LIBRARY_PATH", "LANG")}
     try:
         proc = subprocess.run(
             [sys.executable, "-u", WORKER_SCRIPT,
              "--postprocess-stage", geo_json, routes_json, str(via_cost)],
-            env=env, cwd=here)
+            env=subprocess_environment(), cwd=here)
         if proc.returncode != 0:
             with open(routes_json) as f:
                 result = json.load(f)
@@ -187,12 +184,10 @@ def _apply_subprocess(board_file, out_file, routes_json, drc):
     drc_json = out_file + ".apply.drc.json"
     with open(drc_json, "w") as f:
         json.dump(drc, f)
-    env = {k: v for k, v in os.environ.items()
-           if k in ("PATH", "HOME", "LD_LIBRARY_PATH", "LANG")}
     proc = subprocess.run(
         [sys.executable, "-u", WORKER_SCRIPT,
          "--apply-stage", board_file, out_file, routes_json, drc_json],
-        env=env, cwd=here)
+        env=subprocess_environment(), cwd=here)
     if proc.returncode != 0:
         raise RuntimeError(f"apply stage exited {proc.returncode}")
 

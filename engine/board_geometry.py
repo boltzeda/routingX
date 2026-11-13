@@ -4,8 +4,8 @@ This phase reads an existing placed board; it does not change placement.
 """
 
 import math
-import sys
 
+from kicad_host import import_pcbnew
 from routing_rules import normalize_routing_rules
 from router_constants import DEFAULT_DRC, NM
 
@@ -63,9 +63,7 @@ def _clamp_routing_rules(drc, floors):
 
 def _clamp_routing_rules_for_board(board_file, drc):
     """Resolve KiCad minima before routing, not only during geometry export."""
-    sys.path.insert(0, "/usr/lib/python3/dist-packages")
-    import pcbnew
-
+    pcbnew = import_pcbnew()
     board = pcbnew.LoadBoard(board_file)
     if board is None:
         raise RuntimeError(f"could not load board rules from {board_file}")
@@ -75,9 +73,7 @@ def _clamp_routing_rules_for_board(board_file, drc):
 def extract_geometry(board_file, drc, verbose=True):
     """Load the board and return a JSON-serializable geometry dict.
     Layer ids are opaque pcbnew integers throughout."""
-    sys.path.insert(0, '/usr/lib/python3/dist-packages')
-    import pcbnew
-
+    pcbnew = import_pcbnew()
     drc = normalize_routing_rules({**DEFAULT_DRC, **(drc or {})})
     board = pcbnew.LoadBoard(board_file)
     if board is None:

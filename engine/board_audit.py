@@ -9,6 +9,7 @@ import sys
 import tempfile
 
 from board_apply import _strip_tracks_text
+from kicad_host import find_kicad_cli, import_pcbnew, subprocess_environment
 
 WORKER_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker.py")
 
@@ -130,8 +131,7 @@ def _audit_zone_pads_on(board, geo):
 
 def audit_zone_pads(board_file, geo):
     """Standalone wrapper: fresh process => LoadBoard is safe here."""
-    sys.path.insert(0, '/usr/lib/python3/dist-packages')
-    import pcbnew
+    pcbnew = import_pcbnew()
     board = pcbnew.LoadBoard(board_file)
     if board is None:
         return []
@@ -153,12 +153,10 @@ def _audit_subprocess(board_file, geo):
         os.remove(out_json)
     except OSError:
         pass
-    env = {k: v for k, v in os.environ.items()
-           if k in ("PATH", "HOME", "LD_LIBRARY_PATH", "LANG")}
     proc = subprocess.run(
         [sys.executable, "-u", WORKER_SCRIPT,
          "--audit-stage", board_file, geo_json, out_json],
-        env=env, cwd=here)
+        env=subprocess_environment(), cwd=here)
     if os.path.exists(out_json):
         with open(out_json) as f:
             return json.load(f)
@@ -172,7 +170,7 @@ def _native_kicad_drc(board_file):
         report_path = report.name
     try:
         proc = subprocess.run(
-            ["kicad-cli", "pcb", "drc", "--format", "json",
+            [str(find_kicad_cli()), "pcb", "drc", "--format", "json",
              "--severity-all", "--refill-zones", "-o", report_path,
              os.path.abspath(board_file)],
             capture_output=True, text=True, timeout=120,
@@ -286,7 +284,7 @@ def _audit_final_connectivity(board_file, source_board, report_override=None):
 
         def run_drc(path, output):
             proc = subprocess.run(
-                ["kicad-cli", "pcb", "drc", "--format", "json",
+                [str(find_kicad_cli()), "pcb", "drc", "--format", "json",
                  "--severity-all", "--refill-zones", "-o", output, path],
                 capture_output=True, text=True)
             if proc.returncode not in (0, 5) or not os.path.exists(output):
