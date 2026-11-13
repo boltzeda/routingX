@@ -186,7 +186,7 @@ is split by routing responsibility under `router_tool/engine/`.
     using that interface, and writes the routing-result sidecar.
   - `main()` handles the internal worker-stage command options. It is called
     through the compatibility file below, not by the user-facing package CLI.
-- `engine/lineexplore.py` is the small compatibility/worker entry point. It
+- `engine/worker.py` is the small compatibility/worker entry point. It
   re-exports `route_board_file(...)` and `run_lineexplore(...)`, then delegates
   internal subprocess commands to `pipeline.main()`. Keeping this file lets
   the worker processes use one stable script path while the implementation is
