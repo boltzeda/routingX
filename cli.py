@@ -14,7 +14,6 @@ from typing import Any
 
 ENGINE_DIR = Path(__file__).resolve().parent / "engine"
 WORKER_SOURCE = ENGINE_DIR / "worker.py"
-PCBNEW_DIST_PACKAGES = Path("/usr/lib/python3/dist-packages")
 
 
 def _load_lineexplore():
@@ -27,8 +26,6 @@ def _load_lineexplore():
     source_dir = str(ENGINE_DIR)
     if source_dir not in sys.path:
         sys.path.insert(0, source_dir)
-    if PCBNEW_DIST_PACKAGES.is_dir() and str(PCBNEW_DIST_PACKAGES) not in sys.path:
-        sys.path.append(str(PCBNEW_DIST_PACKAGES))
 
     spec = importlib.util.spec_from_file_location(
         "router_tool_worker_implementation", WORKER_SOURCE
@@ -57,6 +54,15 @@ def _result_sidecar(output_board: Path) -> Path:
     return output_board.with_name(f"{output_board.stem}_routing_result.json")
 
 
+def _partial_output_path(output_board: Path) -> Path:
+    stem = output_board.stem
+    if stem.endswith("_partial"):
+        return output_board
+    if stem.endswith("_routed"):
+        stem = stem[:-len("_routed")]
+    return output_board.with_name(f"{stem}_partial{output_board.suffix}")
+
+
 def route_board(
     input_board: Path,
     output_board: Path,
@@ -73,12 +79,15 @@ def route_board(
     """
     source = input_board.expanduser().resolve()
     destination = output_board.expanduser().resolve()
+    partial_destination = _partial_output_path(destination)
     if not source.is_file():
         raise FileNotFoundError(f"input board does not exist: {source}")
     if source.suffix.lower() != ".kicad_pcb":
         raise ValueError("input must be a .kicad_pcb board file")
     if source == destination:
         raise ValueError("output board must differ from input; source is preserved")
+    if source == partial_destination:
+        raise ValueError("partial output board must differ from input; source is preserved")
     if not destination.parent.is_dir():
         destination.parent.mkdir(parents=True, exist_ok=True)
     if not destination.parent.is_dir():
@@ -93,6 +102,13 @@ def route_board(
         via_cost=via_cost, verbose=verbose,
     )
     routes_path = Path(str(destination) + ".routes.json")
+    if not ok and destination != partial_destination:
+        destination.replace(partial_destination)
+        partial_routes_path = Path(str(partial_destination) + ".routes.json")
+        if routes_path.is_file():
+            routes_path.replace(partial_routes_path)
+        destination = partial_destination
+        routes_path = partial_routes_path
     failures: dict[str, Any] = {}
     if routes_path.is_file():
         try:
@@ -123,7 +139,7 @@ def route_board(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="python -m router_tool",
+        prog="python -m Boltzpcb_router",
         description=(
             "Route an already placed KiCad PCB with LineExplore. "
             "The input board is preserved; placement is not performed."
@@ -132,7 +148,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("board", type=Path, help="placed, unrouted .kicad_pcb input")
     parser.add_argument(
         "--out", type=Path,
-        help="routed board output (default: <input>_lineexplore_routed.kicad_pcb)",
+        help=("board output (default: <input>_routed.kicad_pcb; "
+              "partial routes use <input>_partial.kicad_pcb)"),
     )
     parser.add_argument("--drc", type=Path, help="optional routing-rules JSON file")
     parser.add_argument("--via-cost", type=float, default=2.0)
@@ -145,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     source = args.board.expanduser()
     output = args.out or source.with_name(
-        f"{source.stem}_lineexplore_routed.kicad_pcb"
+        f"{source.stem}_routed.kicad_pcb"
     )
     try:
         result = route_board(
