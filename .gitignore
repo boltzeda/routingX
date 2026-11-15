@@ -6,5 +6,4 @@ __pycache__/
 # Router-generated files
 *.routes.json
 *_routing_result.json
-*_routed.kicad_pcb
 *.geo
